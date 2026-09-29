@@ -1,0 +1,66 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: beige;
+}
+
+h1 {
+    color: palevioletred;
+}
+.container {
+    text-align: center;
+}
+
+video {
+    border: 2px solid aquamarine;
+    width: 640px;
+    height: 480px;
+    border-radius: 15px;
+}
+
+.controls {
+    margin-top: 10px;
+}
+
+.controls input {
+    padding: 5px;
+    width: 100px;
+    background-color: pink;
+    color: black;
+}
+
+.controls button {
+    padding: 10px 28px;
+    cursor: pointer;
+    background-color: pink;
+}
+
+#canvas {
+    display: none;
+}
+
+#photos {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.photo {
+    margin: 10px;
+    position: relative;
+}
+
+.photo img {
+    width: 160px;
+    height: 120px;
+    border: 2px solid #333;
+}
+
+.photo button {
+    position: absolute;
+    bottom: 5px;
+    left: 27.5%;
+    padding: 5px;
+    cursor: pointer;
+}
