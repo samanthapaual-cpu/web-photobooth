@@ -17,6 +17,7 @@ video {
     width: 640px;
     height: 480px;
     border-radius: 15px;
+    display: none;
 }
 
 .controls {
@@ -37,8 +38,13 @@ video {
 }
 
 #canvas {
-    display: none;
+    display: block;
+    width: 640px;
+    height: 480px;
+    border: 2px solid aquamarine;
+    border-radius: 15px;
 }
+
 
 #photos {
     display: flex;
