@@ -1,0 +1,3 @@
+Hey guys! I am building a web photobooth, wherein you can take photos with filters and frames. But I'm just adding here the logic structure for now, and I will improve it later on. Also, this web photobooth only stores photos in your local storage, which means your photos   will only be stored in your browsers, and not on my database. And, I did this so you guys can freely take photos without worrying if other people can access it. 
+
+My activity for today (September 19, 2026) is to edit some frames, so I  can test it tomorrow. So yeah, be with me on this journey. Thank you!
