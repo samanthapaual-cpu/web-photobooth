@@ -1,26 +1,82 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Web Photo Booth</title>
+
+    <link rel="icon" type="image/png" href="assets/frames/logo1.png">
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
+
     <div class="container">
+
         <h1>Whimsy-beany Photo Booth</h1>
+
+        <!-- Camera -->
         <video autoplay id="video"></video>
+
+        <!-- Main Canvas -->
         <canvas id="canvas"></canvas>
+
+
+        <!-- Controls -->
         <div class="controls">
-            <input type="number" min="0" placeholder="Timer (Sec)" id="timer"/>
-            <button id="capture-btn"> Capture </button>
-            <button id="filter-btn"> Filter </button>
-            <button id="frame-btn"> Frame: On </button>
+
+            <!-- Timer -->
+            <input
+                type="number"
+                min="0"
+                placeholder="Timer (Sec)"
+                id="timer"
+            >
+
+
+            <!-- Number of Photos -->
+            <select id="photo-count">
+                <option value="1">1 Photo</option>
+                <option value="2">2 Photos</option>
+                <option value="3">3 Photos</option>
+                <option value="4">4 Photos</option>
+            </select>
+
+
+            <!-- Photo Type -->
+            <select id="photo-type">
+                <option value="different">Different Photos</option>
+                <option value="same">Same Photo</option>
+            </select>
+
+
+            <!-- Buttons -->
+            <button id="capture-btn">
+                Capture
+            </button>
+
+            <button id="filter-btn">
+                Filter: None
+            </button>
+
+            <button id="frame-btn">
+                Frame: On
+            </button>
+
         </div>
+
+
+        <!-- Captured Photos -->
         <div id="photos"></div>
+
     </div>
 
+
     <script src="js/script.js"></script>
+
 </body>
+
 </html>
