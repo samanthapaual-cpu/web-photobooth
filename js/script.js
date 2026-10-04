@@ -6,6 +6,9 @@ const frameBtn = document.getElementById("frame-btn");
 const photosContainer = document.getElementById("photos");
 const timerInput = document.getElementById("timer");
 
+const photoCount = document.getElementById("photo-count");
+const photoType = document.getElementById("photo-type");
+
 const canvas = document.getElementById("canvas");
 const context = canvas.getContext("2d");
 
@@ -15,7 +18,8 @@ const context = canvas.getContext("2d");
 // ==============================
 
 const frame = new Image();
-frame.src = "assets/frames/Frame1.png";
+frame.src = "assets/frames/Frame2-2.png";
+
 let frameEnabled = true;
 
 
@@ -45,6 +49,7 @@ const filters = [
 let filterIndex = 0;
 let currentFilter = filters[filterIndex].value;
 
+
 // ==============================
 // CAMERA
 // ==============================
@@ -65,6 +70,7 @@ navigator.mediaDevices.getUserMedia({
 // ==============================
 
 video.addEventListener("loadedmetadata", () => {
+
     canvas.width = 640;
     canvas.height = 480;
 
@@ -78,7 +84,7 @@ video.addEventListener("loadedmetadata", () => {
 // ==============================
 
 function drawPreview() {
-    // Clear canvas
+
     context.clearRect(
         0,
         0,
@@ -86,7 +92,7 @@ function drawPreview() {
         canvas.height
     );
 
-    // Apply filter to camera
+    // Apply filter
     context.filter = currentFilter;
 
     // Draw camera
@@ -101,7 +107,7 @@ function drawPreview() {
     // Remove filter
     context.filter = "none";
 
-    // Draw frame only if enabled
+    // Draw frame
     if (
         frameEnabled &&
         frame.complete &&
@@ -118,23 +124,24 @@ function drawPreview() {
 
     }
 
-    // Continue live preview
     requestAnimationFrame(drawPreview);
-
 }
+
 
 // ==============================
 // FILTER BUTTON
 // ==============================
 
 filterBtn.addEventListener("click", () => {
+
     filterIndex++;
+
     if (filterIndex >= filters.length) {
         filterIndex = 0;
-
     }
 
     currentFilter = filters[filterIndex].value;
+
     filterBtn.textContent =
         `Filter: ${filters[filterIndex].name}`;
 
@@ -146,70 +153,389 @@ filterBtn.addEventListener("click", () => {
 // ==============================
 
 frameBtn.addEventListener("click", () => {
+
     frameEnabled = !frameEnabled;
 
     if (frameEnabled) {
+
         frameBtn.textContent = "Frame: On";
+
     } else {
+
         frameBtn.textContent = "Frame: Off";
+
     }
+
 });
+
 
 // ==============================
 // CAPTURE BUTTON
 // ==============================
 
-captureBtn.addEventListener("click", () => {
-    let timer = Number(timerInput.value);
+captureBtn.addEventListener("click", async () => {
 
-    if (timer > 0) {
-        captureBtn.disabled = true;
+    const count = Number(photoCount.value);
+    const type = photoType.value;
 
-        const countdown = setInterval(() => {
-            captureBtn.textContent =
-                `Capture (${timer})`;
-            timer--;
-
-            if (timer < 0) {
-                clearInterval(countdown);
-                captureBtn.textContent = "Capture";
-                captureBtn.disabled = false;
-                capturePhoto();
-            }
-        }, 1000);
-
-    } else {
-        capturePhoto();
+    if (!count || count < 1) {
+        return;
     }
+
+    // Prevent multiple captures
+    captureBtn.disabled = true;
+    filterBtn.disabled = true;
+    frameBtn.disabled = true;
+    photoCount.disabled = true;
+    photoType.disabled = true;
+
+    // Remove previous photos
+    photosContainer.innerHTML = "";
+
+    try {
+
+        // ==============================
+        // SAME PHOTO
+        // ==============================
+
+        if (type === "same") {
+
+            // Take only ONE actual photo
+            const photo = await takePhoto(1, 1);
+
+            // Duplicate the photo
+            const photos = [];
+
+            for (let i = 0; i < count; i++) {
+                photos.push(photo);
+            }
+
+            // Create strip
+            if (count === 1) {
+
+                displaySinglePhoto(photo);
+
+            } else {
+
+                await createPhotoStrip(photos);
+
+            }
+
+        }
+
+
+        // ==============================
+        // DIFFERENT PHOTOS
+        // ==============================
+
+        else {
+
+            const photos = [];
+
+            for (let i = 0; i < count; i++) {
+
+                const photo = await takePhoto(
+                    i + 1,
+                    count
+                );
+
+                photos.push(photo);
+
+                // Small pause between shots
+                if (i < count - 1) {
+                    await wait(700);
+                }
+
+            }
+
+            // One photo = normal photo
+            if (count === 1) {
+
+                displaySinglePhoto(photos[0]);
+
+            }
+
+            // Multiple photos = ONE STRIP
+            else {
+
+                await createPhotoStrip(photos);
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error("Capture error:", error);
+
+    }
+
+
+    // Enable controls again
+    captureBtn.disabled = false;
+    filterBtn.disabled = false;
+    frameBtn.disabled = false;
+    photoCount.disabled = false;
+    photoType.disabled = false;
+
+    captureBtn.textContent = "Capture";
+
 });
 
+
 // ==============================
-// CAPTURE PHOTO
+// TAKE PHOTO
 // ==============================
 
-function capturePhoto() {
+async function takePhoto(current, total) {
+
+    const timer = Number(timerInput.value);
+
+    // Show which photo is being taken
+    if (total > 1) {
+
+        captureBtn.textContent =
+            `Photo ${current} of ${total}`;
+
+    }
+
+
+    // ==============================
+    // COUNTDOWN
+    // ==============================
+
+    if (timer > 0) {
+
+        for (let i = timer; i > 0; i--) {
+
+            captureBtn.textContent =
+                `${i}`;
+
+            await wait(1000);
+
+        }
+
+    }
+
+
+    // ==============================
+    // CAPTURE CURRENT CANVAS
+    // ==============================
+
+    captureBtn.textContent = "📸";
+
+    await wait(200);
+
     const dataURL = canvas.toDataURL("image/png");
-    // Create photo container
-    const photoDiv = document.createElement("div");
+
+    return dataURL;
+}
+
+
+// ==============================
+// CREATE PHOTO STRIP
+// ==============================
+
+async function createPhotoStrip(photoURLs) {
+
+    const photoWidth = 640;
+    const photoHeight = 480;
+
+    const spacing = 20;
+    const padding = 20;
+
+    const stripCanvas = document.createElement("canvas");
+
+    stripCanvas.width =
+        photoWidth + (padding * 2);
+
+    stripCanvas.height =
+        (photoHeight * photoURLs.length) +
+        (spacing * (photoURLs.length - 1)) +
+        (padding * 2);
+
+    const stripContext =
+        stripCanvas.getContext("2d");
+
+
+    // ==============================
+    // STRIP BACKGROUND
+    // ==============================
+
+    stripContext.fillStyle = "#fffaf5";
+
+    stripContext.fillRect(
+        0,
+        0,
+        stripCanvas.width,
+        stripCanvas.height
+    );
+
+
+    // ==============================
+    // ADD EACH PHOTO
+    // ==============================
+
+    for (let i = 0; i < photoURLs.length; i++) {
+
+        const image = new Image();
+
+        image.src = photoURLs[i];
+
+        await new Promise((resolve) => {
+
+            image.onload = resolve;
+
+        });
+
+
+        const y =
+            padding +
+            i * (photoHeight + spacing);
+
+
+        stripContext.drawImage(
+            image,
+            padding,
+            y,
+            photoWidth,
+            photoHeight
+        );
+
+    }
+
+
+    // ==============================
+    // FINAL STRIP
+    // ==============================
+
+    const stripDataURL =
+        stripCanvas.toDataURL("image/png");
+
+    displayPhotoStrip(stripDataURL);
+}
+
+
+// ==============================
+// DISPLAY SINGLE PHOTO
+// ==============================
+
+function displaySinglePhoto(dataURL) {
+
+    const photoDiv =
+        document.createElement("div");
+
     photoDiv.classList.add("photo");
 
-    // Create captured image
-    const img = document.createElement("img");
+
+    const img =
+        document.createElement("img");
+
     img.src = dataURL;
+
 
     photoDiv.appendChild(img);
 
+
     // Download button
-    const downloadBtn = document.createElement("button");
-    downloadBtn.textContent = "Download";
+    const downloadBtn =
+        document.createElement("button");
+
+    downloadBtn.textContent =
+        "Download";
+
+
     downloadBtn.addEventListener("click", () => {
-        const a = document.createElement("a");
-        a.href = dataURL;
-        a.download = "photo.png";
-        a.click();
+
+        downloadPhoto(
+            dataURL,
+            "photo.png"
+        );
+
     });
 
+
     photoDiv.appendChild(downloadBtn);
-    // Add photo
+
     photosContainer.appendChild(photoDiv);
+}
+
+
+// ==============================
+// DISPLAY PHOTO STRIP
+// ==============================
+
+function displayPhotoStrip(dataURL) {
+
+    const photoDiv =
+        document.createElement("div");
+
+    photoDiv.classList.add("photo");
+
+
+    const img =
+        document.createElement("img");
+
+    img.src = dataURL;
+
+    // Keep strip proportional
+    img.style.width = "320px";
+    img.style.height = "auto";
+
+
+    photoDiv.appendChild(img);
+
+
+    // Download button
+    const downloadBtn =
+        document.createElement("button");
+
+    downloadBtn.textContent =
+        "Download Strip";
+
+
+    downloadBtn.addEventListener("click", () => {
+
+        downloadPhoto(
+            dataURL,
+            "photo-strip.png"
+        );
+
+    });
+
+
+    photoDiv.appendChild(downloadBtn);
+
+    photosContainer.appendChild(photoDiv);
+}
+
+
+// ==============================
+// DOWNLOAD PHOTO
+// ==============================
+
+function downloadPhoto(dataURL, filename) {
+
+    const a =
+        document.createElement("a");
+
+    a.href = dataURL;
+    a.download = filename;
+
+    a.click();
+}
+
+
+// ==============================
+// WAIT FUNCTION
+// ==============================
+
+function wait(milliseconds) {
+
+    return new Promise((resolve) => {
+
+        setTimeout(resolve, milliseconds);
+
+    });
+
 }
